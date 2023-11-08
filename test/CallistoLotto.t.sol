@@ -4,8 +4,8 @@ pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 import {CallistoLotto} from "../src/CallistoLotto.sol";
-import {MockERC20} from "../src/mock/MockERC20.sol";
-import {VRFCoordinatorV2Mock} from "../src/mock/VRFCoordinatorV2Mock.sol";
+import {MockERC20} from "../test/mock/MockERC20.sol";
+import {VRFCoordinatorV2Mock} from "../test/mock/VRFCoordinatorV2Mock.sol";
 
 contract CallistoLottoTest is Test {
     MockERC20 CALLISTO;
@@ -16,7 +16,13 @@ contract CallistoLottoTest is Test {
     function setUp() public {
         CALLISTO = new MockERC20(address(this));
         COORDINATOR = new VRFCoordinatorV2Mock(100000000000000000, 1000000000);
-        LOTTO = new CallistoLotto(1, address(COORDINATOR), address(CALLISTO), 10, 1000000000000000000); // 10s lotto time, 1 token entry price
+        LOTTO = new CallistoLotto(
+            1,
+            address(COORDINATOR),
+            address(CALLISTO),
+            10,
+            1000000000000000000
+        ); // 10s lotto time, 1 token entry price
         subId = COORDINATOR.createSubscription();
         COORDINATOR.fundSubscription(subId, 100 ether);
         COORDINATOR.addConsumer(subId, address(LOTTO));
