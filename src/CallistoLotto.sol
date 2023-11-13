@@ -55,11 +55,6 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
 
     IERC20 CALLISTO;
 
-    /**
-     * SHIT REQUIRED BY VRF PLEASE IGNORE
-     *
-     */
-
     VRFCoordinatorV2Interface COORDINATOR;
 
     uint64 s_subscriptionId;
@@ -90,13 +85,8 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         address callistoToken,
         uint256 _expiry,
         uint256 _ticketPrice
-    )
-        ERC721("Callisto Lottery Ticket", "CTKT")
-        VRFConsumerBaseV2(coordinator) // 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625
-    {
-        COORDINATOR = VRFCoordinatorV2Interface(
-            coordinator // 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625
-        );
+    ) ERC721("Callisto Lottery Ticket", "CTKT") VRFConsumerBaseV2(coordinator) {
+        COORDINATOR = VRFCoordinatorV2Interface(coordinator);
         s_subscriptionId = subscriptionId;
         CALLISTO = IERC20(callistoToken);
         expiry = _expiry;
