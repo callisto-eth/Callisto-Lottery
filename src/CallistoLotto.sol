@@ -290,18 +290,20 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
     // say, 1 token for matching pos 1, 5 tokens for pos 2 etc.
     function getLottoPrize(uint256 lottoId) public view returns (uint256[(5)] memory prizeDistribution) {
         require(lottoIdToLotto[lottoId].status == LotteryStatus.SETTLED, "Requested Lottery instance is not settled");
+
+        uint256 nc1 = getNumberCount(lottoId, 0, lottoIdToLotto[lottoId].winningNumbers[0]);
+        uint256 nc2 = getNumberCount(lottoId, 1, lottoIdToLotto[lottoId].winningNumbers[1]);
+        uint256 nc3 = getNumberCount(lottoId, 2, lottoIdToLotto[lottoId].winningNumbers[2]);
+        uint256 nc4 = getNumberCount(lottoId, 3, lottoIdToLotto[lottoId].winningNumbers[3]);
+        uint256 nc5 = getNumberCount(lottoId, 4, lottoIdToLotto[lottoId].winningNumbers[4]);
+
         return (
             [
-                (lottoIdToLotto[lottoId].prizePool / 5)
-                    / getNumberCount(lottoId, 0, lottoIdToLotto[lottoId].winningNumbers[0]),
-                (lottoIdToLotto[lottoId].prizePool / 5)
-                    / getNumberCount(lottoId, 1, lottoIdToLotto[lottoId].winningNumbers[1]),
-                (lottoIdToLotto[lottoId].prizePool / 5)
-                    / getNumberCount(lottoId, 2, lottoIdToLotto[lottoId].winningNumbers[2]),
-                (lottoIdToLotto[lottoId].prizePool / 5)
-                    / getNumberCount(lottoId, 3, lottoIdToLotto[lottoId].winningNumbers[3]),
-                (lottoIdToLotto[lottoId].prizePool / 5)
-                    / getNumberCount(lottoId, 4, lottoIdToLotto[lottoId].winningNumbers[4])
+                nc1 != 0 ? (lottoIdToLotto[lottoId].prizePool / 5) / nc1 : 0,
+                nc2 != 0 ? (lottoIdToLotto[lottoId].prizePool / 5) / nc2 : 0,
+                nc3 != 0 ? (lottoIdToLotto[lottoId].prizePool / 5) / nc3 : 0,
+                nc4 != 0 ? (lottoIdToLotto[lottoId].prizePool / 5) / nc4 : 0,
+                nc5 != 0 ? (lottoIdToLotto[lottoId].prizePool / 5) / nc5 : 0
             ]
         );
     }
