@@ -43,7 +43,7 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
     mapping(uint256 => LotteryInstance) lottoIdToLotto;
     mapping(uint256 => uint256) requestIdToLottoId;
     mapping(uint256 => Ticket) ticketIdToTicket;
-    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256))) lottoIdToPositionToNumberToCounter;
+    mapping(uint256 => mapping(uint256 => mapping(uint8 => uint256))) lottoIdToPositionToNumberToCounter;
 
     uint256 public ticketPrice;
     uint256 public currentLottoId;
@@ -175,6 +175,8 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         uint8[(5)] memory numbers = getTicketNumbers(ticketId);
         uint256 prizePoolShare = getPrizePoolShare(ticketIdToTicket[ticketId].lottoId, numbers);
         lottoIdToLotto[ticketIdToTicket[ticketId].lottoId].prizePool -= prizePoolShare;
+        lottoIdToLotto[ticketIdToTicket[ticketId].lottoId].claimedAmount += prizePoolShare;
+
         CALLISTO.transfer(msg.sender, prizePoolShare);
 
         emit TicketClaimed(msg.sender, ticketId, prizePoolShare);
@@ -219,11 +221,11 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         return (lottoIdToLotto[currentLottoId].status == LotteryStatus.SETTLED);
     }
 
-    function incrementNumberPos(uint256 pos, uint256 num) internal {
+    function incrementNumberPos(uint256 pos, uint8 num) internal {
         lottoIdToPositionToNumberToCounter[currentLottoId][pos][num]++;
     }
 
-    function getNumberCount(uint256 lottoId, uint256 pos, uint256 num) internal view returns (uint256) {
+    function getNumberCount(uint256 lottoId, uint256 pos, uint8 num) internal view returns (uint256) {
         return (lottoIdToPositionToNumberToCounter[lottoId][pos][num]);
     }
 
@@ -286,7 +288,8 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
     // Returns the number of tokens you would get per positional match. For example :
     // If winning numbers are [1,2,3,4,5], this function returns the prize return for matching per positon
     // say, 1 token for matching pos 1, 5 tokens for pos 2 etc.
-    function getLottoPrize(uint256 lottoId) public view returns (uint256[] memory prizeDistribution) {
+    function getLottoPrize(uint256 lottoId) public view returns (uint256[(5)] memory prizeDistribution) {
+        require(lottoIdToLotto[lottoId].status == LotteryStatus.SETTLED, "Requested Lottery instance is not settled");
         return (
             [
                 (lottoIdToLotto[lottoId].prizePool / 5)
