@@ -67,14 +67,19 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
     /**
      * HARDCODED FOR SEPOLIA
      * COORDINATOR: 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625
-     *
      */
 
     /**
      * SHIT REQUIRED BY VRF PLEASE IGNORE
-     *
      */
 
+    /// @notice Constructor
+    /// @dev Initializes chainlink VRF and 0th lottery instance (first lotto)
+    /// @param subscriptionId Chainlink VRF subscription ID
+    /// @param coordinator Chainlink VRF coordinator address
+    /// @param callistoToken Callisto Token ERC20
+    /// @param _expiry Duration per lotto instance
+    /// @param _ticketPrice Ticket price in ERC20 tokens
     constructor(
         uint64 subscriptionId,
         address coordinator,
@@ -96,6 +101,8 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
      *
      */
 
+    /// @notice Initializes a new lottery instance
+    /// @dev Only callable once drawLottoResult is called by ChainLink VRF (Where LotterStatus = SETTLED)
     function startNextLotto() public {
         require(newLottoStartable(), "Lottery: Either lotto is in play or VRF has been requested");
 
@@ -114,6 +121,9 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         emit LotteryResultDrawn(currentLottoId, lottoIdToLotto[currentLottoId].winningNumbers);
     }
 
+    /// @notice Ends the current lottery instance and makes a chainlink VRF request
+    /// @dev Only callable when the lottery time has ended and there is no outgoing VRF request
+    /// @return requestId Chainlink VRF requestId
     function endLotto() public returns (uint256 requestId) {
         require(currentLottoEndable(), "Lottery: Either lotto is in play or VRF has been requested");
 
@@ -129,9 +139,12 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
 
     /**
      * Ticket purchasing logic
-     *
      */
 
+    /// @notice Purchase a ticket with 5 chosen numbers
+    /// @dev Can only be called when the current lottery is IN_PLAY
+    /// @param numbers Set of 5 numbers, [0-9] chosen by player
+    /// @return ticketId ID of the ERC721 ticket token
     function buyTicket(uint8[(5)] memory numbers) public returns (uint256 ticketId) {
         require(isValidNumbers(numbers), "Lottery: Invalid set of numbers!");
 
@@ -158,9 +171,12 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
 
     /**
      * Ticket Claim Logic
-     *
      */
 
+
+    /// @notice Claim tickets of settled lottery instances
+    /// @dev Can only be called when the lottery which ticket belongs to is SETTLED
+    /// @param ticketId ID of the ticket to claim
     function claimTicket(uint256 ticketId) public {
         require(ownerOf(ticketId) == msg.sender, "Lottery: You don't own this ticket!");
 
@@ -184,13 +200,20 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
 
     /**
      *  Internal functions
-     *
      */
 
+    /// @notice ChainLink VRF Callback
+    /// @dev Passes returned seed to drawLottoResult() function
+    /// @param _randomWords return value of ChainLink VRF callback
     function fulfillRandomWords(uint256, uint256[] memory _randomWords) internal override {
         drawLottoResult(_randomWords[0]);
     }
 
+    /// @notice Internal function used to compute user winnings
+    /// @dev called in claimTicket()
+    /// @param lottoId Lottery ID to check against
+    /// @param numbers set of numbers to calculate share for
+    /// @return share The amount of tokens to pay for that specific set of numbers
     function getPrizePoolShare(uint256 lottoId, uint8[(5)] memory numbers) internal view returns (uint256 share) {
         for (uint256 i = 0; i < 5; i++) {
             if (numbers[i] == lottoIdToLotto[lottoId].winningNumbers[i]) {
@@ -217,18 +240,25 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         );
     }
 
+    // Checks if current lotto is settled
     function newLottoStartable() internal view returns (bool) {
         return (lottoIdToLotto[currentLottoId].status == LotteryStatus.SETTLED);
     }
 
+    // Wrapper to increment mapping value
     function incrementNumberPos(uint256 pos, uint8 num) internal {
         lottoIdToPositionToNumberToCounter[currentLottoId][pos][num]++;
     }
 
+    // Wrapper to read mapping value
     function getNumberCount(uint256 lottoId, uint256 pos, uint8 num) internal view returns (uint256) {
         return (lottoIdToPositionToNumberToCounter[lottoId][pos][num]);
     }
 
+    /// @notice Returns an array of winning numbers from the ChainLink VRF seed
+    /// @dev Called by VRF Coordinator in drawLottoResult()
+    /// @param seed Random number returned by ChainLink
+    /// @return nums Array of winning numbers derived from the seed
     function drawWinningNumbers(uint256 seed) internal pure returns (uint8[(5)] memory nums) {
         for (uint256 i = 0; i < 5; i++) {
             seed = uint256(keccak256(abi.encode(seed)));
@@ -237,6 +267,10 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         return (nums);
     }
 
+    /// @notice Checks the validity of a set of lotto numbers
+    /// @dev Iterates over the set of numbers to ensure it is between [0-9]
+    /// @param numbers a parameter just like in doxygen (must be followed by parameter name)
+    /// @return bool true if numbers are valid
     function isValidNumbers(uint8[(5)] memory numbers) internal pure returns (bool) {
         for (uint256 i = 0; i < 5; i++) {
             if (numbers[i] > 9) {
@@ -246,17 +280,24 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         return (true);
     }
 
+    /// @notice Gets winning numbers of a lottoId
+    /// @dev Internal getter for winning numbers
+    /// @param lottoId Id of the lotto to query
+    /// @return uint8[(5)] Winning numbers of requested lotto instance
     function getWinningNumbers(uint256 lottoId) internal view returns (uint8[(5)] memory) {
         return (lottoIdToLotto[lottoId].winningNumbers);
     }
 
+    /// @notice Gets number of a ticketId
+    /// @dev Internal getter for ticket numbers
+    /// @param ticketId Id of the ticket to query
+    /// @return uint8[(5)] Numbers of requested ticket
     function getTicketNumbers(uint256 ticketId) internal view returns (uint8[(5)] memory) {
         return (ticketIdToTicket[ticketId].numbers);
     }
 
     /**
      *  View functions
-     *
      */
 
     function getLottoById(uint256 id)
