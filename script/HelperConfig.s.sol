@@ -35,7 +35,7 @@ contract HelperConfig is Script {
             _lotteryExpiry: 10 minutes,
             _callistoToken: 0x15768cd3e37Ad3a4FEA33703dF4DAC1Ee7a43efd,
             _vrfCoordinator: 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
-            _subsciptionID: 1082,
+            _subsciptionID: 6525,
             _linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
             _deployerKey: vm.envUint("PRIVATE_KEY")
         });
