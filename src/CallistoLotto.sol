@@ -174,7 +174,6 @@ contract CallistoLotto is VRFConsumerBaseV2, ERC721 {
         ticketIdToTicket[ticketId].claimed = true;
         uint8[(5)] memory numbers = getTicketNumbers(ticketId);
         uint256 prizePoolShare = getPrizePoolShare(ticketIdToTicket[ticketId].lottoId, numbers);
-        lottoIdToLotto[ticketIdToTicket[ticketId].lottoId].prizePool -= prizePoolShare;
         lottoIdToLotto[ticketIdToTicket[ticketId].lottoId].claimedAmount += prizePoolShare;
 
         CALLISTO.transfer(msg.sender, prizePoolShare);
